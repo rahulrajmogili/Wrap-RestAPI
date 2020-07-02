@@ -18,6 +18,10 @@ function fetchPersonByURL(url) {
   return fetch(url).then(res => res.json())
 }
 
+function fetchDetailsByURL(url) {
+  return fetch(url).then(res => res.element_texts.json())
+}
+
 // function fetchCoinDetailsByURL(url) {
 //   // return fetch(url).then(res => res.json())
 //   const response = await fetch('https://sites.lib.uh.edu/kmneuma2/api/items?page=2');
@@ -42,10 +46,7 @@ const ElementTextsType = new GraphQLObjectType({
   name: 'Element Details',
   description: 'Represents the details of the coin',
   fields: () => ({
-    element_texts: { 
-      type: GraphQLNonNull(ElementTextsType),
-      resolve: ids => ids.element_texts.map(fetchPersonByURL)
-    }
+      text: { type: GraphQLNonNull(GraphQLString) }
   })
 })
 
@@ -53,7 +54,7 @@ const RootQueryType = new GraphQLObjectType({
   name: 'Query',
   description: 'Root Query',
   fields: () => ({
-    ids: {
+    coins: {
       type: new GraphQLList(CoinType),
       description: 'List of all ids',
       args: {
@@ -75,6 +76,7 @@ const RootQueryType = new GraphQLObjectType({
     //   args: {
     //     text: { type: GraphQLString }
     //   },
+    //   resolve: () => fetchDetailsByURL(BASE_URL)
     // }
   })
 })
