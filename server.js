@@ -7,77 +7,138 @@ const {
   GraphQLString,
   GraphQLList,
   GraphQLInt,
-  GraphQLNonNull
+  GraphQLNonNull,
+  GraphQLUnionType,
+  GraphQLBoolean
 } = require('graphql')
 const { json, text } = require('express')
 const app = express()
 
-const BASE_URL = 'https://sites.lib.uh.edu/kmneuma2/api/items?page=2';
+const BASE_URL = 'https://sites.lib.uh.edu/kmneuma2/api/items?collection=3';
 
-function fetchPersonByURL(url) {
+function fetchCoinsByUrl(url) {
   return fetch(url).then(res => res.json())
 }
 
-function fetchDetailsByURL(url) {
-  return fetch(url).then(res => res.element_texts.json())
-}
-
-// function fetchCoinDetailsByURL(url) {
-//   // return fetch(url).then(res => res.json())
-//   const response = await fetch('https://sites.lib.uh.edu/kmneuma2/api/items?page=2');
-//   resp = response.json();
-//   return resp.element_texts;
-// }
-
-// function fetchElementTextsByUrl(url) {
-//   return fetch(url).then(res => json())
-// }
-
-const CoinType = new GraphQLObjectType({
-  name: 'Coin',
-  description: 'These are details about the coin',
+const ElementTextsType = new GraphQLObjectType({
+  name: 'FindByElementTexts',
+  description: 'Represents elements texts',
   fields: () => ({
-    id: { type: GraphQLNonNull(GraphQLInt) },
-    url: { type: GraphQLNonNull(GraphQLString) },
+    html: { type: GraphQLNonNull(GraphQLBoolean) },
+    text: { type: GraphQLNonNull(GraphQLString)},
+    element_set: { type: ElementSetType },
+    element: { type: ElementType }
   })
 })
 
-const ElementTextsType = new GraphQLObjectType({
-  name: 'Element Details',
-  description: 'Represents the details of the coin',
+const ElementSetType = new GraphQLObjectType({
+  name: 'FindByElementSetType',
+  description: 'Represents the element set of the coin',
   fields: () => ({
-      text: { type: GraphQLNonNull(GraphQLString) }
+    id: { type: GraphQLNonNull(GraphQLInt) },
+    url: { type: GraphQLNonNull(GraphQLString) },
+    name: { type: GraphQLNonNull(GraphQLString) },
+    resource: { type: GraphQLNonNull(GraphQLString) }
+  })
+})
+
+const ElementType = new GraphQLObjectType({
+  name: 'FindByElementType',
+  description: 'Represents the element of the coin',
+  fields: () => ({
+    id: { type: GraphQLNonNull(GraphQLInt) },
+    url: { type: GraphQLNonNull(GraphQLString) },
+    name: { type: GraphQLNonNull(GraphQLString) },
+    resource: { type: GraphQLNonNull(GraphQLString) }
+  })
+})
+
+const CoinType = new GraphQLObjectType({
+  name: 'FindbyId',
+  description: 'Represents finding coins by ID',
+  fields: () => ({
+    id: { type: GraphQLNonNull(GraphQLInt) },
+    url: { type: GraphQLNonNull(GraphQLString) },
+    public: { type: GraphQLNonNull(GraphQLBoolean) },
+    featured: { type: GraphQLNonNull(GraphQLBoolean)},
+    added: { type: GraphQLNonNull(GraphQLString) },
+    modified: { type: GraphQLNonNull(GraphQLString) },
+    item_type: {
+      type: ItemType
+    },
+    collection: {
+      type: CollectionType
+    },
+    owner: {
+      type: OwnerType
+    },
+    files: {
+      type: FilesType
+    },
+  })
+})
+
+const ItemType = new GraphQLObjectType({
+  name: 'FindByItemType',
+  description: 'Represents the item type of the coin',
+  fields: () => ({
+    id: { type: GraphQLNonNull(GraphQLInt) },
+    url: { type: GraphQLNonNull(GraphQLString) },
+    name: { type: GraphQLNonNull(GraphQLString) },
+    resource: { type: GraphQLNonNull(GraphQLString) }
+  })
+})
+
+const CollectionType = new GraphQLObjectType({
+  name: 'FindByCollectionType',
+  description: 'Represents the collection type of the coin',
+  fields: () => ({
+    id: { type: GraphQLNonNull(GraphQLInt) },
+    url: { type: GraphQLNonNull(GraphQLString) },
+    resource: { type: GraphQLNonNull(GraphQLString) }
+  })
+})
+
+const OwnerType = new GraphQLObjectType({
+  name: 'FindByOwnerType',
+  description: 'Represents the owner type of the coin',
+  fields: () => ({
+    id: { type: GraphQLNonNull(GraphQLInt) },
+    url: { type: GraphQLNonNull(GraphQLString) },
+    resource: { type: GraphQLNonNull(GraphQLString) }
+  })
+})
+
+const FilesType = new GraphQLObjectType({
+  name: 'FindByFilesType',
+  description: 'Represents the owner type of the coin',
+  fields: () => ({
+    count: { type: GraphQLNonNull(GraphQLInt) },
+    url: { type: GraphQLNonNull(GraphQLString) },
+    resource: { type: GraphQLNonNull(GraphQLString) }
   })
 })
 
 const RootQueryType = new GraphQLObjectType({
   name: 'Query',
-  description: 'Root Query',
+  description: 'Root query',
   fields: () => ({
     coins: {
       type: new GraphQLList(CoinType),
-      description: 'List of all ids',
+      description: 'Respresents a list of all IDs',
       args: {
         id: { type: GraphQLString }
       },
-      resolve: () => fetchPersonByURL(BASE_URL)
+      resolve: () => fetchCoinsByUrl(BASE_URL)
     },
-    url: {
-      type: new GraphQLList(CoinType),
-      description: 'List of all url',
+    element_texts: {
+      type: new GraphQLList(ElementTextsType),
+      description: 'Represents a list of elements texts',
       args: {
-        url: { type: GraphQLString }
+        text: { type: GraphQLString }
       },
-      resolve: () => fetchPersonByURL(BASE_URL)
-    },
-    // element_texts: {
-    //   type: new GraphQLList(ElementTextsType),
-    //   description: 'Details of the coin',
-    //   args: {
-    //     text: { type: GraphQLString }
-    //   },
-    //   resolve: () => fetchDetailsByURL(BASE_URL)
-    // }
+      resolve: () => fetchCoinsByUrl(BASE_URL)
+    }
   })
 })
 
@@ -85,8 +146,8 @@ const schema = new GraphQLSchema({
   query: RootQueryType
 })
 
-app.use('/graphql', expressGraphQL({
+app.use('/', expressGraphQL({
   schema: schema,
   graphiql: true
 }))
-app.listen(5000, () => console.log('Server Running'))
+app.listen(3000, () => console.log('Server Running'))
